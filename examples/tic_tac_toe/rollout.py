@@ -29,14 +29,19 @@ class TicTacToeScenario(BaseModel):
 
 
 @art.retry(exceptions=(openai.LengthFinishReasonError,))
-async def rollout(model: art.Model, scenario: TicTacToeScenario) -> art.Trajectory:
+async def rollout(model: art.Model, scenario: TicTacToeScenario, think: bool = False) -> art.Trajectory:
     game = generate_game()
+
+    if not think:
+        sysprompt = f"You are a tic-tac-toe player. You are playing against an opponent. Always choose the move most likely to lead to an eventual win. Return your move as an XML object with a single property 'move', like so: <move>A1</move>. Optional moves are 'A1', 'B3', 'C2', etc. You are the {game['agent_symbol']} symbol."
+    else:
+        sysprompt = f"You are a tic-tac-toe player. You are playing against an opponent. First, think about the state of the game and which move makes a win most likely. Return your chain of thought as an XML object with a single property 'think', like so: <think>I should block the attack by choosing A1</think>. Then, finalize your action by returning your move as an XML object with a single property 'move', like so: <move>A1</move>. Optional moves are 'A1', 'B3', 'C2', etc. You are the {game['agent_symbol']} symbol."
 
     trajectory = art.Trajectory(
         messages_and_choices=[
             {
                 "role": "system",
-                "content": f"You are a tic-tac-toe player. You are playing against an opponent. Always choose the move most likely to lead to an eventual win. Return your move as an XML object with a single property 'move', like so: <move>A1</move>. Optional moves are 'A1', 'B3', 'C2', etc. You are the {game['agent_symbol']} symbol.",
+                "content": sysprompt,
             }
         ],
         reward=0,
@@ -136,3 +141,4 @@ async def rollout(model: art.Model, scenario: TicTacToeScenario) -> art.Trajecto
             print(f"Error reporting to OpenPipe: {e}")
 
     return trajectory
+    
