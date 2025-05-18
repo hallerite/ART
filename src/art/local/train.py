@@ -124,7 +124,7 @@ def get_compute_loss_fn(trainer: "GRPOTrainer") -> Callable[..., torch.Tensor]:
         prob_ratio = torch.exp(new_logprobs - old_logprobs)
         policy_loss = -torch.min(
             prob_ratio * advantages,
-            torch.clip(prob_ratio, 1 - 0.2, 1 + 0.2) * advantages,
+            torch.clip(prob_ratio, 1 - config.clip_eps, 1 + config.clip_eps) * advantages,
         )
         if ref_logprobs is not None:
             kl_div = (
